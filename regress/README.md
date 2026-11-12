@@ -110,6 +110,13 @@ These tests record both CPU trace ports and all IO. They also depend on the soft
 or the printed text, so it shows up here. A full run with these tests takes about 10 minutes on four
 cores, and `tools.sh` also installs the pinned RISC-V GCC.
 
+## Line coverage
+
+[`cover/`](cover) adds a measurement of which RTL lines the tests ran, and a proof that the tests notice
+changes. With it, `run.py` reports coverage per file. Currently 99.5% of the RTL lines run, and each of
+the 31 lines that cannot be reached is listed with a reason in `cover/waivers.txt`. See
+[`cover/README.md`](cover/README.md).
+
 ## What does a test file look like?
 
 This is all of [`unit/sys_clock.vhdt`](unit/sys_clock.vhdt):
@@ -151,8 +158,9 @@ no software and do not see the version number. The whole-processor tests in `sys
 **Why a fixed GHDL version, and not the one the other workflows use?** So that a baseline recorded on one
 machine matches on every other. `tools.sh` checks the download against a fixed checksum.
 
-**How do I know the tests notice real changes?** Change one line in a block, for example invert a signal,
-and run its test. It reports the output and the clock tick. Undo the change and it is quiet again.
+**How do I know the tests notice real changes?** `python3 regress/cover/mutate.py` makes 14 small RTL
+changes in a private copy, one at a time, and checks that each is reported. It also makes two comment-only
+changes, which must not be reported.
 
 **What is in a baseline file?** Not the full record, which would be far too large. For each output it holds
 a checksum, the number of value changes, and checksums of up to 32 slices of time. That is enough to say

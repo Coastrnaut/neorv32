@@ -1,0 +1,50 @@
+# Lines the regression cannot reach, one per line:
+#   file | occurrence | source text | reason
+# occurrence numbers the identical lines of the file, counted from its top. See README.md.
+
+# neorv32_cache: "else" of "if not READ_ONLY" inside states that a read-only cache never enters,
+# so the branch is dead in the read-only build, and the writable build always takes the other arm.
+neorv32_cache.vhd | 4 | ctrl_nxt.state <= S_IDLE; | S_SYNC_DELAY else-arm: S_SYNC states are entered only by a writable cache
+neorv32_cache.vhd | 5 | ctrl_nxt.state <= S_IDLE; | S_SYNC_CHECK else-arm: S_SYNC states are entered only by a writable cache
+neorv32_cache.vhd | 7 | ctrl_nxt.state <= S_IDLE; | S_SYNC_NEXT else-arm: S_SYNC states are entered only by a writable cache
+neorv32_cache.vhd | 8 | ctrl_nxt.state <= S_IDLE; | S_READ_BURST else-arm: the burst state is entered only with BURSTS_EN
+neorv32_cache.vhd | 10 | ctrl_nxt.state <= S_IDLE; | S_WRITE_START else-arm: write states are entered only by a writable cache
+neorv32_cache.vhd | 11 | ctrl_nxt.state <= S_IDLE; | S_WRITE_REQ else-arm: write states are entered only by a writable cache
+neorv32_cache.vhd | 12 | ctrl_nxt.state <= S_IDLE; | S_WRITE_RSP else-arm: write states are entered only by a writable cache
+neorv32_cache.vhd | 13 | ctrl_nxt.state <= S_IDLE; | S_WRITE_WAIT else-arm: write states are entered only by a writable cache
+neorv32_cache.vhd | 14 | ctrl_nxt.state <= S_IDLE; | S_WRITE_BURST else-arm: write states are entered only by a writable cache
+neorv32_cache.vhd | 16 | ctrl_nxt.state <= S_IDLE; | S_WRITE_DONE else-arm: write states are entered only by a writable cache
+neorv32_cache.vhd | 17 | ctrl_nxt.state <= S_IDLE; | when others of a state machine whose enumeration is fully listed
+
+# when others of a fully listed enumeration, or of a two-bit case that only metavalues reach
+neorv32_cpu_alu_fpu.vhd | 2 | ctrl_engine.state <= S_IDLE; | when others of a fully listed enumeration
+neorv32_cpu_alu_fpu.vhd | 1 | when others => comp_less_ff <= '0'; -- undefined | case on two sign bits with the other values listed: only metavalues reach it
+neorv32_cpu_alu_fpu.vhd | 2 | when others => comp_less_ff <= '0'; -- undefined | case on two sign bits with the other values listed: only metavalues reach it
+neorv32_cpu_alu_fpu.vhd | 2 | ctrl.state <= S_IDLE; | when others of a fully listed enumeration, normalizer
+neorv32_cpu_alu_fpu.vhd | 5 | ctrl.state <= S_IDLE; | when others of a fully listed enumeration, f2i converter
+neorv32_cpu_lsu.vhd | 1 | when others => rdata_o <= (others => 'X'); | case on two address bits with all values listed: only metavalues reach it
+neorv32_debug_dm.vhd | 5 | cmd_state <= CMD_IDLE; | when others of a fully listed enumeration
+neorv32_debug_dtm.vhd | 1 | when others      => state <= LOGIC_RESET; | when others of a fully listed enumeration of TAP states
+neorv32_dma.vhd | 3 | engine.state <= S_CHECK; | when others of a fully listed enumeration
+neorv32_twd.vhd | 8 | engine.state <= S_IDLE; | when others of a fully listed enumeration
+xbus2axi4_bridge.vhd | 6 | state <= S_IDLE; | when others of a fully listed enumeration
+
+# neorv32_cpu_alu_fpu: round.sub is assigned only '0', in all branches, so the decrement arm is dead
+neorv32_cpu_alu_fpu.vhd | 1 | round.output <= std_ulogic_vector(unsigned(tmp_v) - 1); | round.sub is never set to 1 in the normalizer, see lines "round.sub <= '0'; -- decrement"
+neorv32_cpu_alu_fpu.vhd | 2 | round.output <= std_ulogic_vector(unsigned(tmp_v) - 1); | round.sub is never set to 1 in the f2i converter, see lines "round.sub <= '0'; -- decrement"
+
+# neorv32_cpu_control: a funct12 other than ecall, ebreak, mret, dret, wfi is illegal, and an illegal
+# instruction does not reach this case, which the enclosing "non-illegal instruction" check guards.
+neorv32_cpu_control.vhd | 1 | when others => exec_nxt.state <= S_DISPATCH;  -- illegal or CSR operation | the guard above excludes illegal instructions, and all legal funct12 values are listed
+
+# neorv32_cpu_trace: simulation log helpers
+neorv32_cpu_trace.vhd | 1 | return false; | match_f compares 32-bit words with 32-bit patterns only, the lengths never differ
+neorv32_cpu_trace.vhd | 1 | return "DECODE_FAIL"; | the last table entry matches every word, so the loop always returns
+
+# fallback returns after a loop that covers the whole argument range
+neorv32_package.vhd | 1 | return 32; -- fallback | index_size_f: the loop finds a result for every natural
+neorv32_trng.vhd | 1 | return 0; | the loop finds a result for every value this constant function gets
+xbus2axi4_bridge.vhd | 1 | return 10; -- fallback | BURST_LEN is limited to 1024, so the loop always returns
+
+# neorv32_trng: this is the real hardware ring oscillator, which simulation replaces by design
+neorv32_trng.vhd | 1 | inv_out(i) <= not inv_in(i); -- this is one part of the ring oscillator's physical propagation delay | SIM_MODE is always true in simulation, because is_simulation_c is
