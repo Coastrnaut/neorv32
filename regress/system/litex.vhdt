@@ -1,0 +1,36 @@
+--! dut neorv32_litex_core_complex
+--! generic CONFIG=0
+--! generic DEBUG=false
+--! config litex_0 CONFIG=0
+--! config litex_1 CONFIG=1
+--! config litex_2 CONFIG=2
+--! config litex_3 CONFIG=3 DEBUG=true
+--! arch
+  -- Wishbone: an endless loop of nops with a jump back to the start
+  wb: process(clk_i)
+  begin
+    if rising_edge(clk_i) then
+      wb_ack_i <= '0';
+      wb_dat_i <= x"00000013";
+      if (wb_cyc_o = '1') and (wb_stb_o = '1') and (wb_ack_i = '0') then
+        wb_ack_i <= '1';
+        if wb_adr_o(7 downto 2) = "111111" then
+          wb_dat_i <= x"F01FF06F";
+        end if;
+      end if;
+    end if;
+  end process;
+--! stim
+  -- procs
+    variable tv : std_ulogic_vector(31 downto 0);
+  -- end procs
+  tick(3000);
+  irq_mei_i <= '1';
+  tick(100);
+  irq_mei_i <= '0';
+  if DEBUG then
+    jtag_reset(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o);
+    dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", x"00000001");
+    dmi_read(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010001", tv);
+  end if;
+  tick(1000);

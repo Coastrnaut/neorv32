@@ -1,0 +1,474 @@
+--! dut neorv32_top
+--! param IDLE : natural := 100000
+--! param MAXCYC : natural := 2000000000
+--! generic CLOCK_FREQUENCY=100000000
+--! generic DUAL_CORE_EN=true
+--! generic TRACE_PORT_EN=true
+--! generic TRACE_SIMLOG_EN=false
+--! generic BOOT_MODE_SELECT=2
+--! generic CPU_RF_ARCH_SEL=0
+--! generic OCD_EN=true
+--! generic OCD_NUM_HW_TRIGGERS=3
+--! generic OCD_AUTHENTICATION=true
+--! generic RISCV_ISA_C=true
+--! generic RISCV_ISA_M=true
+--! generic RISCV_ISA_U=true
+--! generic RISCV_ISA_Zaamo=true
+--! generic RISCV_ISA_Zalrsc=true
+--! generic RISCV_ISA_Zba=true
+--! generic RISCV_ISA_Zbb=true
+--! generic RISCV_ISA_Zbc=true
+--! generic RISCV_ISA_Zbkb=true
+--! generic RISCV_ISA_Zbkc=true
+--! generic RISCV_ISA_Zbkx=true
+--! generic RISCV_ISA_Zbs=true
+--! generic RISCV_ISA_Zcb=true
+--! generic RISCV_ISA_Zcmop=true
+--! generic RISCV_ISA_Zfinx=true
+--! generic RISCV_ISA_Zibi=true
+--! generic RISCV_ISA_Zicntr=true
+--! generic RISCV_ISA_Zicond=true
+--! generic RISCV_ISA_Zihpm=true
+--! generic RISCV_ISA_Zimop=true
+--! generic RISCV_ISA_Zknd=true
+--! generic RISCV_ISA_Zkne=true
+--! generic RISCV_ISA_Zknh=true
+--! generic RISCV_ISA_Zksed=true
+--! generic RISCV_ISA_Zksh=true
+--! generic RISCV_ISA_Zmmul=true
+--! generic RISCV_ISA_Smcntrpmf=true
+--! generic RISCV_ISA_Xcfu=true
+--! generic CPU_FAST_MUL_EN=true
+--! generic CPU_FAST_SHIFT_EN=true
+--! generic PMP_NUM_REGIONS=5
+--! generic PMP_TOR_MODE_EN=true
+--! generic PMP_NAP_MODE_EN=true
+--! generic HPM_NUM_CNTS=29
+--! generic IMEM_EN=true
+--! generic IMEM_SIZE=32*1024
+--! generic DMEM_EN=true
+--! generic DMEM_OUTREG_EN=true
+--! generic ICACHE_EN=true
+--! generic ICACHE_NUM_BLOCKS=64
+--! generic DCACHE_EN=true
+--! generic DCACHE_NUM_BLOCKS=32
+--! generic CACHE_BLOCK_SIZE=32
+--! generic SMC_EN=true
+--! generic XBUS_EN=true
+--! generic XBUS_REGSTAGE_EN=true
+--! generic IO_GPIO_NUM=32
+--! generic IO_GPIO_DIR_EN=true
+--! generic IO_CLINT_EN=true
+--! generic IO_UART0_EN=true
+--! generic IO_UART0_RX_FIFO=16
+--! generic IO_UART0_TX_FIFO=16
+--! generic IO_UART1_EN=true
+--! generic IO_SPI_EN=true
+--! generic IO_SPI_FIFO=4
+--! generic IO_SDI_EN=true
+--! generic IO_SDI_FIFO=4
+--! generic IO_TWI_EN=true
+--! generic IO_TWI_FIFO=8
+--! generic IO_TWD_EN=true
+--! generic IO_TWD_RX_FIFO=4
+--! generic IO_TWD_TX_FIFO=4
+--! generic IO_PWM_NUM=8
+--! generic IO_WDT_EN=true
+--! generic IO_TRNG_EN=true
+--! generic IO_TRNG_FIFO=4
+--! generic IO_CFS_EN=true
+--! generic IO_NEOLED_EN=true
+--! generic IO_NEOLED_TX_FIFO=8
+--! generic IO_GPTMR_NUM=4
+--! generic IO_ONEWIRE_EN=true
+--! generic IO_ONEWIRE_FIFO=8
+--! generic IO_DMA_EN=true
+--! generic IO_DMA_DSC_FIFO=8
+--! generic IO_SLINK_EN=true
+--! generic IO_SLINK_RX_FIFO=4
+--! generic IO_SLINK_TX_FIFO=1
+--! generic IO_TRACEBUF_EN=true
+--! generic IO_TRACEBUF_DEPTH=32
+--! base SEED=1
+--! config soc_processor_check CFG=1 @prog=processor_check @stop=40ms @expect="PROCESSOR CHECK COMPLETED SUCCESSFULLY!"
+--! config soc_check_serial CFG=1 DUAL_CORE_EN=false CPU_FAST_MUL_EN=false CPU_FAST_SHIFT_EN=false CPU_CONSTT_BR_EN=true CPU_RF_ARCH_SEL=1 ICACHE_EN=false DCACHE_EN=false XBUS_REGSTAGE_EN=false DMEM_OUTREG_EN=false IMEM_OUTREG_EN=true @prog=processor_check @stop=60ms @expect="PROCESSOR CHECK COMPLETED SUCCESSFULLY!"
+--! config soc_check_rf2 CFG=1 DUAL_CORE_EN=false CPU_RF_ARCH_SEL=2 CPU_FAST_MUL_REGS=2 CACHE_BURSTS_EN=false ICACHE_NUM_BLOCKS=4 DCACHE_NUM_BLOCKS=4 CACHE_BLOCK_SIZE=16 @prog=processor_check @stop=60ms @expect="PROCESSOR CHECK COMPLETED SUCCESSFULLY!"
+--! config soc_check_rf3 CFG=1 CPU_RF_ARCH_SEL=3 CPU_FAST_MUL_REGS=3 @prog=processor_check @stop=60ms @expect="PROCESSOR CHECK COMPLETED SUCCESSFULLY!"
+--! config soc_min DUAL_CORE_EN=false OCD_EN=false OCD_AUTHENTICATION=false RISCV_ISA_C=false RISCV_ISA_M=false RISCV_ISA_U=false RISCV_ISA_Zaamo=false RISCV_ISA_Zalrsc=false RISCV_ISA_Zba=false RISCV_ISA_Zbb=false RISCV_ISA_Zbc=false RISCV_ISA_Zbkb=false RISCV_ISA_Zbkc=false RISCV_ISA_Zbkx=false RISCV_ISA_Zbs=false RISCV_ISA_Zcb=false RISCV_ISA_Zcmop=false RISCV_ISA_Zfinx=false RISCV_ISA_Zibi=false RISCV_ISA_Zicntr=false RISCV_ISA_Zicond=false RISCV_ISA_Zihpm=false RISCV_ISA_Zimop=false RISCV_ISA_Zknd=false RISCV_ISA_Zkne=false RISCV_ISA_Zknh=false RISCV_ISA_Zksed=false RISCV_ISA_Zksh=false RISCV_ISA_Zmmul=false RISCV_ISA_Smcntrpmf=false RISCV_ISA_Xcfu=false CPU_FAST_MUL_EN=false CPU_FAST_SHIFT_EN=false PMP_TOR_MODE_EN=false PMP_NAP_MODE_EN=false ICACHE_EN=false DCACHE_EN=false SMC_EN=false XBUS_EN=false IO_GPIO_DIR_EN=false IO_CLINT_EN=false IO_UART1_EN=false IO_SPI_EN=false IO_SDI_EN=false IO_TWI_EN=false IO_TWD_EN=false IO_WDT_EN=false IO_TRNG_EN=false IO_CFS_EN=false IO_NEOLED_EN=false IO_ONEWIRE_EN=false IO_DMA_EN=false IO_SLINK_EN=false IO_TRACEBUF_EN=false PMP_NUM_REGIONS=0 HPM_NUM_CNTS=0 IO_GPIO_NUM=0 IO_PWM_NUM=0 IO_GPTMR_NUM=0 OCD_NUM_HW_TRIGGERS=0 IDLE=2000 @prog=smoke @stop=5ms @expect="smoke end"
+--! config soc_e RISCV_ISA_E=true DUAL_CORE_EN=false OCD_EN=false OCD_AUTHENTICATION=false RISCV_ISA_C=false RISCV_ISA_M=false RISCV_ISA_U=false RISCV_ISA_Zaamo=false RISCV_ISA_Zalrsc=false RISCV_ISA_Zba=false RISCV_ISA_Zbb=false RISCV_ISA_Zbc=false RISCV_ISA_Zbkb=false RISCV_ISA_Zbkc=false RISCV_ISA_Zbkx=false RISCV_ISA_Zbs=false RISCV_ISA_Zcb=false RISCV_ISA_Zcmop=false RISCV_ISA_Zfinx=false RISCV_ISA_Zibi=false RISCV_ISA_Zicntr=false RISCV_ISA_Zicond=false RISCV_ISA_Zihpm=false RISCV_ISA_Zimop=false RISCV_ISA_Zknd=false RISCV_ISA_Zkne=false RISCV_ISA_Zknh=false RISCV_ISA_Zksed=false RISCV_ISA_Zksh=false RISCV_ISA_Zmmul=false RISCV_ISA_Smcntrpmf=false RISCV_ISA_Xcfu=false CPU_FAST_MUL_EN=false CPU_FAST_SHIFT_EN=false PMP_TOR_MODE_EN=false PMP_NAP_MODE_EN=false ICACHE_EN=false DCACHE_EN=false SMC_EN=false XBUS_EN=false IO_GPIO_DIR_EN=false IO_CLINT_EN=false IO_UART1_EN=false IO_SPI_EN=false IO_SDI_EN=false IO_TWI_EN=false IO_TWD_EN=false IO_WDT_EN=false IO_TRNG_EN=false IO_CFS_EN=false IO_NEOLED_EN=false IO_ONEWIRE_EN=false IO_DMA_EN=false IO_SLINK_EN=false IO_TRACEBUF_EN=false PMP_NUM_REGIONS=0 HPM_NUM_CNTS=0 IO_GPIO_NUM=0 IO_PWM_NUM=0 IO_GPTMR_NUM=0 OCD_NUM_HW_TRIGGERS=0 IDLE=2000 @prog=smoke @march=rv32e_zicsr_zifencei @mabi=ilp32e @stop=5ms @expect="smoke end"
+--! config soc_rvc RISCV_ISA_C=true RISCV_ISA_Zcb=true RISCV_ISA_Zcmop=false IDLE=4000 @prog=smoke @march=rv32imc_zicsr_zifencei @stop=8ms @expect="smoke end"
+--! config soc_simlog TRACE_PORT_EN=true TRACE_SIMLOG_EN=true IDLE=4000 @prog=smoke @stop=8ms @expect="smoke end"
+--! config soc_noauth OCD_AUTHENTICATION=false CFG=1 IDLE=4000 @prog=smoke @stop=8ms @expect="smoke end"
+--! config soc_extdtm OCD_EXT_DTM=true CFG=2 IDLE=8000 @prog=smoke @stop=8ms @expect="smoke end"
+--! config soc_large DUAL_CORE_EN=false PMP_NUM_REGIONS=16 PMP_MIN_GRANULARITY=64 OCD_NUM_HW_TRIGGERS=16 HPM_NUM_CNTS=3 HPM_CNT_WIDTH=40 IO_GPIO_NUM=8 IO_PWM_NUM=32 IO_GPTMR_NUM=16 IDLE=4000 @prog=smoke @stop=8ms @expect="smoke end"
+--! config soc_bootloader BOOT_MODE_SELECT=0 IDLE=100000 MAXCYC=150000 @stop=5ms
+--! config soc_extmem BOOT_MODE_SELECT=1 IMEM_EN=false CFG=4 IDLE=4000 @prog=smoke @stop=20ms @expect="smoke end"
+--! config soc_extmem_nocache BOOT_MODE_SELECT=1 IMEM_EN=false DMEM_EN=false ICACHE_EN=false DCACHE_EN=false CFG=4 IDLE=4000 @prog=smoke @stop=30ms @expect="smoke end"
+--! config soc_edge IDLE=8000 @prog=edge @march=rv32imac_zicsr_zifencei @stop=8ms @expect="edge end"
+--! config soc_nouart IO_UART0_EN=false IDLE=4000 @prog=smoke @stop=8ms
+--! config soc_debug_csr CFG=16 DUAL_CORE_EN=false IDLE=100000 MAXCYC=250000 @prog=smoke @stop=8ms
+--! config soc_wdt_reset IDLE=30000 MAXCYC=200000 @prog=wdt_reset @stop=5ms @expect="wdt reset cause 2"
+--! decl
+  signal gpio : std_logic_vector(31 downto 0);
+  signal i2c_scl, i2c_sda, onewire : std_logic;
+  signal psram_data : std_logic_vector(3 downto 0);
+  type slink_t is record
+    data  : std_ulogic_vector(31 downto 0);
+    valid, last, ready : std_ulogic;
+  end record;
+  signal slink_tx, slink_rx : slink_t;
+  signal xbus_core_req, xbus_mmio_req, xbus_trig_req, xbus_mem_a_req, xbus_mem_b_req : xbus_req_t;
+  signal xbus_core_rsp, xbus_mmio_rsp, xbus_trig_rsp, xbus_mem_a_rsp, xbus_mem_b_rsp : xbus_rsp_t;
+  signal xbus_rom_req, xbus_ram_req, xbus_fmem_data_req, xbus_fmem_tag_req : xbus_req_t;
+  signal xbus_rom_rsp, xbus_ram_rsp, xbus_fmem_data_rsp, xbus_fmem_tag_rsp : xbus_rsp_t;
+--! arch
+  -- same environment as sim/neorv32_tb.vhd
+  gpio_gen: for i in 0 to 31 generate
+    gpio(i) <= std_logic(gpio_o(i)) when (gpio_dir_o(i) = '1') else 'Z';
+  end generate;
+  gpio_i <= std_ulogic_vector(gpio);
+  gpio   <= (others => 'L');
+
+  i2c_sda   <= '0' when (twi_sda_o = '0') else 'Z';
+  i2c_scl   <= '0' when (twi_scl_o = '0') else 'Z';
+  twi_sda_i <= std_ulogic(i2c_sda);
+  twi_scl_i <= std_ulogic(i2c_scl);
+  i2c_sda   <= '0' when (twd_sda_o = '0') else 'Z';
+  twd_sda_i <= std_ulogic(i2c_sda);
+  twd_scl_i <= std_ulogic(i2c_scl);
+  i2c_scl   <= 'H';
+  i2c_sda   <= 'H';
+
+  onewire   <= '0' when (onewire_o = '0') else 'Z';
+  onewire_i <= std_ulogic(onewire);
+  onewire   <= 'H';
+
+  psram_data(0) <= std_logic(smc_sdo_o);
+  smc_sdi_i     <= std_ulogic(psram_data(1));
+  psram_data    <= (others => 'L');
+  psram_0: entity neorv32.psram_model
+    generic map (MEM_BYTES => 8*1024)
+    port map (sck => std_logic(smc_sck_o), cs_n => std_logic(smc_csn_o(0)), sio => psram_data);
+  psram_1: entity neorv32.psram_model
+    generic map (MEM_BYTES => 8*1024)
+    port map (sck => std_logic(smc_sck_o), cs_n => std_logic(smc_csn_o(1)), sio => psram_data);
+
+  sdi_clk_i <= spi_clk_o;
+  sdi_csn_i <= spi_csn_o(7);
+  sdi_dat_i <= spi_dat_o;
+  spi_dat_i <= sdi_dat_o when (spi_csn_o(7) = '0') else spi_dat_o;
+
+  uart0_rxd_i  <= uart1_txd_o;
+  uart1_rxd_i  <= uart0_txd_o;
+  uart0_ctsn_i <= uart1_rtsn_o;
+  uart1_ctsn_i <= uart0_rtsn_o;
+
+  slink_tx.data  <= slink_tx_dat_o;
+  slink_tx.valid <= slink_tx_val_o;
+  slink_tx.last  <= slink_tx_lst_o;
+  slink_tx_rdy_i <= slink_tx.ready;
+  slink_rx_dat_i <= slink_rx.data;
+  slink_rx_val_i <= slink_rx.valid;
+  slink_rx_lst_i <= slink_rx.last;
+  slink_rx.ready <= slink_rx_rdy_o;
+  slink_buffer: entity neorv32.neorv32_prim_fifo
+    generic map (AWIDTH => 0, DWIDTH => 33, OUTGATE => true, ASYNCRD => true)
+    port map (
+      clk_i => clk_i, rstn_i => rstn_i, clear_i => '0', level_o => open,
+      wdata_i(31 downto 0) => slink_tx.data, wdata_i(32) => slink_tx.last,
+      we_i => slink_tx.valid, free_o => slink_tx.ready,
+      re_i => slink_rx.ready, rdata_o(31 downto 0) => slink_rx.data, rdata_o(32) => slink_rx.last,
+      avail_o => slink_rx.valid
+    );
+
+  jtag_test_gen: if (CFG mod 2) = 1 generate
+  jtag_test: process -- copied from sim/neorv32_tb.vhd
+    variable tmp_v : std_ulogic_vector(31 downto 0);
+  begin
+    jtag_tck_i <= '0';
+    jtag_tms_i <= '0';
+    jtag_tdi_i <= '0';
+    wait for 1 us;
+
+    if (CFG mod 2) = 1 then
+      -- reset JTAG tap --
+      wait for 100 ns;
+      report "[TB:JTAG] Resetting JTAG tap...";
+      jtag_reset(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o);
+
+      -- enable DM (dmcontrol[0]) --
+      wait for 100 ns;
+      report "[TB:JTAG] Enabling debug module...";
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", x"00000001"); -- dmcontrol
+
+      -- authenticate (assuming the default authenticator) --
+      wait for 100 ns;
+      report "[TB:JTAG] Authenticating...";
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0110000", x"00000001"); -- authdata
+      dmi_read(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010001", tmp_v); -- dmstatus
+      if (tmp_v(7 downto 0) = x"83") then
+        report "[TB:JTAG] JTAG access authenticated.";
+      else
+        report "[TB:JTAG] Cannot authenticate! (dmstatus = " & to_hexstring_f(tmp_v) & ")" severity error;
+      end if;
+
+      -- halt CPU core 0 --
+      report "[TB:JTAG] Halting CPU-0...";
+      wait for 100 ns;
+      dmi_read(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", tmp_v); -- dmcontrol
+      tmp_v := tmp_v or x"80000000"; -- set haltreq (bit 31)
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", tmp_v); -- dmcontrol
+      dmi_read(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010001", tmp_v); -- dmstatus
+      if (tmp_v(8) = '1') then
+        report "[TB:JTAG] CPU-0 halted.";
+      else
+        report "[TB:JTAG] Cannot halt CPU-0! (dmstatus = " & to_hexstring_f(tmp_v) & ")" severity error;
+      end if;
+
+      -- write data word to testbench "external IO memory" --
+      wait for 100 ns;
+      report "[TB:JTAG] Writing to memory (0xF0000000) via program buffer...";
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0100000", x"00942023"); -- progbuf0 = sw x9, 0(x8)
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0100001", x"00000013"); -- progbuf1 = nop
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0000100", x"F0000000"); -- data0 = memory address
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010111", x"00231008"); -- command = write data0 -> x8
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0000100", x"0cd7e571"); -- data0 = data ("ocd test!")
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010111", x"00271009"); -- command = rite data0 -> x9 + postexec
+      dmi_read(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010110", tmp_v); -- abstractcs
+      if (tmp_v(10 downto 8) = "000") then -- no error?
+        report "[TB:JTAG] Memory write successful.";
+      else
+        report "[TB:JTAG] Memory write FAILED! (abstractcs = " & to_hexstring_f(tmp_v) & ")" severity error;
+      end if;
+
+      -- reset CPU --
+      wait for 100 ns;
+      report "[TB:JTAG] Resetting SoC and halting CPU-0...";
+      dmi_read(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", tmp_v); -- dmcontrol
+      tmp_v := tmp_v or x"00000002"; -- set ndmreset (bit 1)
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", tmp_v); -- dmcontrol
+      wait for 20 ns;
+      dmi_read(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", tmp_v); -- dmcontrol
+      tmp_v := tmp_v and x"FFFFFFFD"; -- clear ndmreset (bit 1)
+      tmp_v := tmp_v or  x"80000000"; -- set haltreq (bit 31)
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", tmp_v); -- dmcontrol
+      wait for 20 ns;
+      dmi_read(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010001", tmp_v); -- dmstatus
+      if (tmp_v(19) = '1') and (tmp_v(9) = '1') then
+        report "[TB:JTAG] CPU-0 reset and halted.";
+      else
+        report "[TB:JTAG] CPU-0 not reset/halted! (dmstatus = " & to_hexstring_f(tmp_v) & ")" severity error;
+      end if;
+
+      -- resume CPU --
+      wait for 100 ns;
+      report "[TB:JTAG] Resuming CPU-0...";
+      dmi_read(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", tmp_v); -- dmcontrol
+      tmp_v := tmp_v and x"7FFFFFFF"; -- clear haltreq (bit 31)
+      tmp_v := tmp_v or  x"40000000"; -- set resumereq (bit 30)
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", tmp_v); -- dmcontrol
+      dmi_read(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010001", tmp_v); -- dmstatus
+      if (tmp_v(17) = '1') then -- allresumeack
+        report "[TB:JTAG] CPU-0 resumed.";
+      else
+        report "[TB:JTAG] Cannot resume CPU-0! (dmstatus = " & to_hexstring_f(tmp_v) & ")" severity error;
+      end if;
+      dmi_read(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", tmp_v); -- dmcontrol
+      tmp_v := tmp_v and x"BFFFFFFF"; -- clear resumereq (bit 30)
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", tmp_v); -- dmcontrol
+
+      -- disable DM --
+      wait for 100 ns;
+      report "[TB:JTAG] Disabling debug module...";
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", x"00000000"); -- dmcontrol
+      dmi_read(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", tmp_v); -- dmcontrol
+      if (tmp_v = x"00000000") then
+        report "[TB:JTAG] Debug module disabled.";
+      else
+        report "[TB:JTAG] Debug module not disabled! (dmstatus = " & to_hexstring_f(tmp_v) & ")" severity error;
+      end if;
+    end if;
+
+    wait;
+  end process;
+  end generate;
+
+  xbus_core_req <= (addr => xbus_adr_o, data => xbus_dat_o, cti => xbus_cti_o, tag => xbus_tag_o,
+                    we => xbus_we_o, sel => xbus_sel_o, stb => xbus_stb_o, cyc => xbus_cyc_o);
+  xbus_dat_i <= xbus_core_rsp.data;
+  xbus_ack_i <= xbus_core_rsp.ack;
+  xbus_err_i <= xbus_core_rsp.err;
+
+  xbus_interconnect: entity neorv32.xbus_gateway
+    generic map (
+      DEV_0_EN => (CFG / 4) mod 2 = 1, DEV_0_SIZE => 32*1024, DEV_0_BASE => x"00000000",
+      DEV_1_EN => (CFG / 4) mod 2 = 1, DEV_1_SIZE => 8*1024,  DEV_1_BASE => x"80000000",
+      DEV_2_EN => true,  DEV_2_SIZE => 8,                DEV_2_BASE => x"F0000000",
+      DEV_3_EN => true,  DEV_3_SIZE => 4,                DEV_3_BASE => x"FF000000",
+      DEV_4_EN => true,  DEV_4_SIZE => 16,               DEV_4_BASE => x"FF100000",
+      DEV_5_EN => true,  DEV_5_SIZE => 16,               DEV_5_BASE => x"FF200000",
+      DEV_6_EN => true,  DEV_6_SIZE => CACHE_BLOCK_SIZE, DEV_6_BASE => x"D0000000",
+      DEV_7_EN => true,  DEV_7_SIZE => CACHE_BLOCK_SIZE, DEV_7_BASE => x"D1000000"
+    )
+    port map (
+      host_req_i => xbus_core_req, host_rsp_o => xbus_core_rsp,
+      dev_0_req_o => xbus_mem_a_req, dev_0_rsp_i => xbus_mem_a_rsp,
+      dev_1_req_o => xbus_mem_b_req, dev_1_rsp_i => xbus_mem_b_rsp,
+      dev_2_req_o => xbus_mmio_req,  dev_2_rsp_i => xbus_mmio_rsp,
+      dev_3_req_o => xbus_trig_req,  dev_3_rsp_i => xbus_trig_rsp,
+      dev_4_req_o => xbus_fmem_data_req, dev_4_rsp_i => xbus_fmem_data_rsp,
+      dev_5_req_o => xbus_fmem_tag_req,  dev_5_rsp_i => xbus_fmem_tag_rsp,
+      dev_6_req_o => xbus_rom_req, dev_6_rsp_i => xbus_rom_rsp,
+      dev_7_req_o => xbus_ram_req, dev_7_rsp_i => xbus_ram_rsp
+    );
+
+  xbus_mem_dummy: process(rstn_i, clk_i)
+  begin
+    if (rstn_i = '0') then
+      xbus_rom_rsp <= xbus_rsp_terminate_c;
+      xbus_ram_rsp <= xbus_rsp_terminate_c;
+    elsif rising_edge(clk_i) then
+      xbus_rom_rsp <= xbus_rsp_terminate_c;
+      xbus_ram_rsp <= xbus_rsp_terminate_c;
+      if (xbus_rom_req.cyc = '1') and (xbus_rom_req.stb = '1') then
+        xbus_rom_rsp.data <= x"abcd1234";
+        xbus_rom_rsp.ack  <= not xbus_rom_req.we;
+        xbus_rom_rsp.err  <= xbus_rom_req.we;
+      elsif (xbus_ram_req.cyc = '1') and (xbus_ram_req.stb = '1') then
+        xbus_ram_rsp.data <= x"5678eeff";
+        xbus_ram_rsp.ack  <= '1';
+        xbus_ram_rsp.err  <= '0';
+      end if;
+    end if;
+  end process;
+
+  ext_mem_gen: if (CFG / 4) mod 2 = 1 generate
+    ext_mem_a: entity neorv32.xbus_memory
+      generic map (MEM_RST => false, MEM_SIZE => 32*1024, MEM_LATE => 2, MEM_FILE => "image.hex")
+      port map (clk_i => clk_i, rstn_i => rstn_i, xbus_req_i => xbus_mem_a_req, xbus_rsp_o => xbus_mem_a_rsp);
+    ext_mem_b: entity neorv32.xbus_memory
+      generic map (MEM_RST => false, MEM_SIZE => 8*1024, MEM_LATE => 1, MEM_FILE => "")
+      port map (clk_i => clk_i, rstn_i => rstn_i, xbus_req_i => xbus_mem_b_req, xbus_rsp_o => xbus_mem_b_rsp);
+  end generate;
+  ext_mem_off_gen: if (CFG / 4) mod 2 = 0 generate
+    xbus_mem_a_rsp <= xbus_rsp_terminate_c;
+    xbus_mem_b_rsp <= xbus_rsp_terminate_c;
+  end generate;
+
+  xbus_mmio: entity neorv32.xbus_memory
+    generic map (MEM_RST => true, MEM_SIZE => 8, MEM_LATE => 16, MEM_FILE => "")
+    port map (clk_i => clk_i, rstn_i => rstn_i, xbus_req_i => xbus_mmio_req, xbus_rsp_o => xbus_mmio_rsp);
+
+  xbus_irq_trigger: process(rstn_i, clk_i)
+  begin
+    if (rstn_i = '0') then
+      irq_msi_i <= '0';
+      irq_mti_i <= '0';
+      irq_mei_i <= '0';
+      xbus_trig_rsp <= xbus_rsp_terminate_c;
+    elsif rising_edge(clk_i) then
+      xbus_trig_rsp.data <= (others => '0');
+      xbus_trig_rsp.ack  <= '0';
+      xbus_trig_rsp.err  <= '0';
+      if ((xbus_trig_req.cyc and xbus_trig_req.stb and xbus_trig_req.we and and_reduce_f(xbus_trig_req.sel)) = '1') then
+        xbus_trig_rsp.ack <= '1';
+        irq_msi_i <= xbus_trig_req.data(03);
+        irq_mti_i <= xbus_trig_req.data(07);
+        irq_mei_i <= xbus_trig_req.data(11);
+      end if;
+    end if;
+  end process;
+
+  xbus_fmem_inst: entity neorv32.xbus_fmem
+    generic map (MEM_SIZE => 16)
+    port map (clk_i => clk_i, rstn_i => rstn_i, tag_req_i => xbus_fmem_tag_req, tag_rsp_o => xbus_fmem_tag_rsp,
+              mem_req_i => xbus_fmem_data_req, mem_rsp_o => xbus_fmem_data_rsp);
+  debug_csr_gen: if ((CFG / 16) mod 2) = 1 generate
+  debug_csr: process
+    variable tv : std_ulogic_vector(31 downto 0);
+    procedure wr(a : std_ulogic_vector(6 downto 0); d : std_ulogic_vector(31 downto 0)) is
+    begin
+      dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, a, d);
+    end procedure;
+    -- x9 := data, then run two program buffer instructions
+    procedure run(d, i0, i1 : std_ulogic_vector(31 downto 0)) is
+    begin
+      wr("0100000", i0);
+      wr("0100001", i1);
+      wr("0000100", d);
+      wr("0010111", x"00271009");
+      wait for 2 us;
+    end procedure;
+    constant nop_c : std_ulogic_vector(31 downto 0) := x"00000013";
+  begin
+    wait for 1 us;
+    if ((CFG / 16) mod 2) = 1 then
+      jtag_reset(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o);
+      wr("0010000", x"00000001");
+      wr("0110000", x"00000001");
+      wr("0010000", x"80000001"); -- halt
+      wait for 2 us;
+      run(x"00000000", x"7B002473", x"7B141073"); -- read dcsr to x8, write dpc from x8
+      run(x"00009003", x"7B049073", x"7B102473"); -- write dcsr with ebreakm+u+step, read dpc
+      run(x"00020000", x"3004A073", nop_c);       -- set mstatus.mprv
+      run(x"00009004", x"7B049073", nop_c);       -- step, return to user mode
+      wr("0010000", x"40000001"); -- resume: leaves debug mode at privilege U and clears mprv
+      wait for 2 us;
+      wr("0010000", x"00000001");
+      wait for 2 us;
+      wr("0010000", x"80000001"); -- halt once more, back to machine mode
+      wait for 2 us;
+      run(x"00000003", x"7B049073", nop_c);
+      wr("0010000", x"40000001");
+      wait for 2 us;
+      wr("0010000", x"00000000");
+    end if;
+    wait;
+  end process;
+  end generate;
+
+  ext_dmi: process
+    procedure dmi(op : std_ulogic_vector(1 downto 0); a : std_ulogic_vector(6 downto 0); d : std_ulogic_vector(31 downto 0)) is
+    begin
+      dmi_req_op_i <= op;
+      dmi_req_addr_i <= a;
+      dmi_req_data_i <= d;
+      wait until rising_edge(clk_i);
+      dmi_req_op_i <= "00";
+      wait until rising_edge(clk_i) and (dmi_rsp_ack_o = '1');
+      wait until rising_edge(clk_i);
+    end procedure;
+  begin
+    wait for 2 us;
+    if ((CFG / 2) mod 2) = 1 then
+      dmi("10", "0010000", x"00000001");
+      dmi("10", "0110000", x"00000001");
+      dmi("01", "0010001", x"00000000");
+      dmi("10", "0010000", x"80000001");
+      dmi("01", "0010001", x"00000000");
+      wait for 500 ns;
+      dmi("10", "0010000", x"40000001");
+      wait for 500 ns;
+      dmi("01", "0010001", x"00000000");
+      dmi("10", "0010000", x"00000001");
+      wait for 500 ns;
+      dmi("10", "0010000", x"00000000");
+    end if;
+    wait;
+  end process;
+--! stim
+  -- procs
+    variable idle_cnt, run_cnt : natural := 0;
+  -- end procs
+  -- run until both cores have retired nothing for IDLE cycles: the program has ended
+  tick(100);
+  loop
+    tick;
+    if (trace_cpu0_o.valid = '1') or (trace_cpu1_o.valid = '1') then
+      idle_cnt := 0;
+    else
+      idle_cnt := idle_cnt + 1;
+    end if;
+    run_cnt := run_cnt + 1;
+    exit when (idle_cnt >= IDLE) or (run_cnt >= MAXCYC);
+  end loop;

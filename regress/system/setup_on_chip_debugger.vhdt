@@ -1,0 +1,10 @@
+--! dut neorv32_test_setup_on_chip_debugger
+--! config setup_on_chip_debugger @prog=smoke @stop=10ms
+--! stim
+  -- procs
+    variable tv : std_ulogic_vector(31 downto 0);
+  -- end procs
+  tick(30000);
+  jtag_reset(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o);
+  dmi_write(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010000", x"00000001");
+  dmi_read(jtag_tck_i, jtag_tms_i, jtag_tdi_i, jtag_tdo_o, "0010001", tv);

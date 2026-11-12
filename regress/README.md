@@ -21,7 +21,7 @@ Editing comments or formatting never changes the result. Only behaviour does.
 ## What happens when I push?
 
 The [`Regression`](../.github/workflows/Regression.yml) workflow runs when a push or pull request touches
-`rtl/`, `sim/` or `regress/`. It takes a few minutes.
+`rtl/`, `sim/`, `sw/` or `regress/`. It takes about 10 minutes.
 
 **It never fails your push.** The check is always green. If behaviour changed, you get a yellow warning on
 the run and a summary that lists what changed. If you ignore it, nothing breaks. The same list simply
@@ -64,8 +64,9 @@ eval "$(bash regress/tools.sh env)"
 python3 regress/run.py
 ```
 
-The first line downloads one fixed GHDL version into `~/tools`. It needs no root. The workflow uses the
-same script, so your machine and GitHub give the same result. A full run takes about one minute on four cores.
+The first line downloads one fixed GHDL version and one fixed RISC-V GCC into `~/tools`. It needs no root. The workflow uses the
+same script, so your machine and GitHub give the same result. The block-level tests alone take about one
+minute on four cores: `python3 regress/run.py --filter '^(?!soc|setup|litex|vivado|bootrom)'`.
 
 | Option | What it does |
 |---|---|
@@ -79,16 +80,35 @@ same script, so your machine and GitHub give the same result. A full run takes a
 
 | Path | What it is |
 |---|---|
-| [`unit/`](unit) | The tests. One file per hardware block, for example `uart.vhdt` for `neorv32_uart`. |
+| [`unit/`](unit) | The block-level tests. One file per hardware block, for example `uart.vhdt` for `neorv32_uart`. |
+| [`system/`](system), [`sw/`](sw) | The whole-processor tests and their programs, see below. |
 | [`golden/`](golden) | The baselines. One file per test file, for example `uart.sig`. Never edit these by hand. |
 | `run.py` | Runs everything and compares. |
 | `tbgen.py` | Turns a test file into a complete VHDL testbench. |
 | `lib/` | A few shared VHDL helpers: a random-number source, a simple bus memory, an AXI device. |
 | `tools.sh` | Installs the one fixed GHDL version. |
 
-There are 164 tests in 59 test files. They cover the blocks that can run on their own: the
-peripherals, the bus blocks, the caches, the debug blocks and the CPU's building blocks. They need only
-GHDL. No RISC-V compiler and no software is involved.
+There are 164 block-level tests in 59 test files in `unit/`. They cover the blocks that can run on their
+own: the peripherals, the bus blocks, the caches, the debug blocks and the CPU's building blocks. They need
+only GHDL.
+
+## Whole-processor tests
+
+[`system/`](system) holds 28 more tests. They run real programs on the complete processor, in the same
+environment as `sim/neorv32_tb.vhd`. This is how the CPU control logic, `neorv32_cpu` and `neorv32_top`
+are tested, because they need real instructions.
+
+| Path | What it is |
+|---|---|
+| `system/soc.vhdt` | `neorv32_top` in 18 configurations. It runs `processor_check`, the bootloader and small programs. |
+| `system/setup_*.vhdt`, `litex.vhdt`, `vivado_ip.vhdt` | The wrappers in `rtl/test_setups` and `rtl/system_integration`. |
+| `system/bootrom.vhdt` | Reads back the bootloader ROM. |
+| [`sw/`](sw) | Three small test programs. `processor_check` comes from `sw/example`. |
+
+These tests record both CPU trace ports and all IO. They also depend on the software: a change in
+`sw/lib`, in `processor_check`, in the bootloader or in the version number changes the compiled programs
+or the printed text, so it shows up here. A full run with these tests takes about 10 minutes on four
+cores, and `tools.sh` also installs the pinned RISC-V GCC.
 
 ## What does a test file look like?
 
@@ -125,8 +145,8 @@ the new baseline with it.
 
 **Do I have to do anything when I add a new block?** No. A block without a test file is not checked.
 
-**Does a version bump or a software change trigger it?** No. These tests use no software and do not see the
-version number.
+**Does a version bump or a software change trigger it?** Not in the block-level tests in `unit/`. They use
+no software and do not see the version number. The whole-processor tests in `system/` do see both.
 
 **Why a fixed GHDL version, and not the one the other workflows use?** So that a baseline recorded on one
 machine matches on every other. `tools.sh` checks the download against a fixed checksum.

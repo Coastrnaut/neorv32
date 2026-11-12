@@ -1,0 +1,4 @@
+--! dut neorv32_test_setup_bootloader
+--! config setup_bootloader @prog=smoke @stop=10ms
+--! stim
+  tick(30000);

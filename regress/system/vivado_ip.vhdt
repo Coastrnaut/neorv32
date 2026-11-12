@@ -1,0 +1,20 @@
+--! dut neorv32_vivado_ip
+--! clock clk
+--! reset resetn
+--! config vivado_default @prog=smoke @stop=10ms
+--! config vivado_full XBUS_EN=true IO_SLINK_EN=true OCD_EN=true IMEM_EN=true DMEM_EN=true BOOT_MODE_SELECT=2 RISCV_ISA_C=true @prog=smoke @stop=10ms
+--! arch
+  slave: entity neorv32.regress_axi_slave port map (
+    clk => clk, resetn => resetn,
+    awaddr => m_axi_awaddr, awlen => m_axi_awlen, awvalid => m_axi_awvalid, awready => m_axi_awready,
+    wlast => m_axi_wlast, wvalid => m_axi_wvalid, wready => m_axi_wready,
+    araddr => m_axi_araddr, arlen => m_axi_arlen, arvalid => m_axi_arvalid, arready => m_axi_arready,
+    rdata => m_axi_rdata, rresp => m_axi_rresp, rlast => m_axi_rlast, rvalid => m_axi_rvalid, rready => m_axi_rready,
+    bresp => m_axi_bresp, bvalid => m_axi_bvalid, bready => m_axi_bready);
+--! stim
+  tick(10);
+  s0_axis_tready <= '1';
+  s1_axis_tvalid <= '1';
+  s1_axis_tdata <= x"12345678";
+  s1_axis_tlast <= '1';
+  tick(40000);

@@ -1,0 +1,8 @@
+--! dut neorv32_bootrom
+--! clock clk_i
+--! stim
+  tick(5);
+  for i in 0 to 64 loop
+    rd(std_ulogic_vector(to_unsigned(i * 4, 32)));
+  end loop;
+  rd(x"00001000");

@@ -8,12 +8,14 @@ on:
     paths:
       - 'rtl/**'
       - 'sim/**'
+      - 'sw/**'
       - 'regress/**'
       - '.github/workflows/Regression.yml'
   pull_request:
     paths:
       - 'rtl/**'
       - 'sim/**'
+      - 'sw/**'
       - 'regress/**'
       - '.github/workflows/Regression.yml'
   workflow_dispatch:
